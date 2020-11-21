@@ -3,21 +3,15 @@ require 'group/element'
 
 module Group
   class AdditiveElement < Group::Element
-    def self.identity
-      0
+    def self.inverse(value, _group)
+      -value
     end
-
-    def operate_by(other_value)
-      @value + other_value
-    end
-
-    def inverse
-      self.class.new -@value
-    end
+    alias_method :operate_by, :operate_by_addition
   end
 
   class Additive < Group::Base
     element_class AdditiveElement
+    identity 0
   end
 end
 

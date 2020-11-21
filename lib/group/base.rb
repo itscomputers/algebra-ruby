@@ -1,10 +1,11 @@
 module Group
   class Base
-    def self.define_attribute(key, value)
+    def self.define_attribute(key, value, **options)
       i_var = "@#{key}"
       instance_variable_set i_var, value
       define_method(key) do
-        self.class.instance_variable_get i_var
+        result = self.class.instance_variable_get i_var
+        options[:should_cast] ? cast(result) : result
       end
     end
 
@@ -12,16 +13,30 @@ module Group
       define_attribute :element_class, value
     end
 
-    def self.identity
-      @element_class.identity
+    def self.identity(value)
+      instance_variable_set :@identity, value
     end
 
-    def identity
-      element_class.identity
+    def self.init_args(**args)
+      define_attribute :init_args, args
+    end
+
+    attr_reader :identity
+
+    def initialize
+      if respond_to? :init_args
+        init_args.each do |key, value|
+          instance_variable_set "@#{key}", value
+          self.class.define_method(key) do
+            instance_variable_get "@#{key}"
+          end
+        end
+      end
+      @identity = cast self.class.instance_variable_get(:@identity)
     end
 
     def cast(thing)
-      element_class.from thing
+      element_class.from thing, self
     end
 
     def binary_operation(thing, other)

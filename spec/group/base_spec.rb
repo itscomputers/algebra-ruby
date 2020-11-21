@@ -1,34 +1,16 @@
 require 'group/base'
 require 'group/element'
+require 'group/additive'
 
 describe Group::Base do
   describe "initialize" do
-    let(:child_class) do
-      Class.new(described_class) do
-        element_class(
-          Class.new(Group::Element) do
-            def self.identity
-              new 0
-            end
-
-            def inverse
-              self.class.new -@value
-            end
-
-            def operate_by(other_value)
-              @value + other_value
-            end
-          end,
-        )
-      end
-    end
-
+    let(:child_class) { Group::Additive }
     let(:group) { child_class.new }
 
     describe "#identity" do
       subject { group.identity.value }
       it { is_expected.to eq 0 }
-      it { is_expected.to eq child_class.identity.value }
+      it { is_expected.to eq child_class.instance_variable_get(:@identity) }
     end
 
     describe "#cast" do

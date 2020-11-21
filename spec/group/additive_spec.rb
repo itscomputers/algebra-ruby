@@ -7,6 +7,10 @@ describe Group::Additive do
     Random.rand(-10**3..10**3)
   end
 
+  describe "#identity" do
+    it { expect(group.identity.value).to eq 0 }
+  end
+
   describe "#inverse" do
     let(:value) { random }
     subject { group.inverse value }
