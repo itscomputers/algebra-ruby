@@ -25,7 +25,7 @@ module Group
     end
 
     def operate_by(other_value)
-      @value * other_value
+      raise NotImplementedError, "implement in child class"
     end
 
     def inverse
