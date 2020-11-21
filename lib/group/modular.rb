@@ -1,5 +1,6 @@
 require 'group/base'
 require 'group/element'
+require 'util'
 
 module Group
   module ModularElementMixin
@@ -20,11 +21,19 @@ module Group
   class ModularAdditiveElement < Group::Element
     include ModularElementMixin
     alias_method :operate_by, :operate_by_addition
+
+    def self.inverse(value, _group)
+      -value
+    end
   end
 
   class ModularMultiplicativeElement < Group::Element
     include ModularElementMixin
     alias_method :operate_by, :operate_by_multiplication
+
+    def self.inverse(value, group)
+      Util::bezout(value, group.modulus).first
+    end
 
     def can_set?(value)
       @group.modulus.gcd(value) == 1
