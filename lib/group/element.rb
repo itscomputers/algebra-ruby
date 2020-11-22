@@ -8,11 +8,11 @@ module Group
     end
 
     def inverse
-      group.elem group.value_inverse(@value)
+      @group.elem @group.value_inverse(@value)
     end
 
     def *(other)
-      group.elem group.value_operation @value, other.value
+      @group.elem @group.value_operation @value, other.value
     end
 
     def exp(exponent)
