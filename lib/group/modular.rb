@@ -3,12 +3,6 @@ require 'group/element'
 require 'util'
 
 module Group
-  module ModularElementMixin
-    def set_value(value)
-      @value = value % @group.modulus
-    end
-  end
-
   class ModularGroup < Group::Base
     def self.for(modulus:)
       raise ArgumentError if modulus < 2
@@ -16,38 +10,35 @@ module Group
       init_args :modulus => modulus
       new
     end
-  end
 
-  class ModularAdditiveElement < Group::Element
-    include ModularElementMixin
-    alias_method :operate_by, :operate_by_addition
-
-    def self.inverse(value, _group)
-      -value
-    end
-  end
-
-  class ModularMultiplicativeElement < Group::Element
-    include ModularElementMixin
-    alias_method :operate_by, :operate_by_multiplication
-
-    def self.inverse(value, group)
-      Util::bezout(value, group.modulus).first
-    end
-
-    def can_set?(value)
-      @group.modulus.gcd(value) == 1
+    def cast(value)
+      value % modulus
     end
   end
 
   class ModularAdditiveGroup < ModularGroup
+    ModularAdditiveElement = Class.new(Group::Element)
     element_class ModularAdditiveElement
-    identity 0
+    value_type Integer
+    identity_value 0
+    value_operation { |a, b| a + b }
+    value_inverse { |x| -x }
   end
 
   class ModularMultiplicativeGroup < ModularGroup
+    ModularMultiplicativeElement = Class.new(Group::Element)
     element_class ModularMultiplicativeElement
-    identity 1
+    value_type Integer
+    identity_value 1
+    value_operation { |a, b| a * b }
+
+    def value_inverse(value)
+      Util.bezout(value, modulus).first
+    end
+
+    def can_cast?(value)
+      modulus.gcd(value) == 1
+    end
   end
 end
 

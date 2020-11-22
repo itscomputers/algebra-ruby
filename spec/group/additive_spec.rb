@@ -15,14 +15,14 @@ describe Group::Additive do
     let(:value) { random }
     subject { group.inverse value }
 
-    it { is_expected.to eq group.cast(-value) }
+    it { is_expected.to eq group.elem(-value) }
   end
 
   describe "#op" do
     let(:values) { 6.times.map { random } }
     subject { group.op *values }
 
-    it { is_expected.to eq group.cast(values.sum) }
+    it { is_expected.to eq group.elem(values.sum) }
   end
 
   describe "#exp" do
@@ -30,7 +30,7 @@ describe Group::Additive do
     let(:exponent) { random }
     subject { group.exp value, exponent }
 
-    it { is_expected.to eq group.cast(value * exponent) }
+    it { is_expected.to eq group.elem(value * exponent) }
   end
 end
 

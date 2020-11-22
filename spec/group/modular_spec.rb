@@ -1,34 +1,5 @@
 require "group/modular"
 
-describe Group::ModularGroup do
-  let(:test_class) do
-    Class.new(described_class) do
-      element_class Group::ModularAdditiveElement
-      identity 0
-    end
-  end
-  let(:modulus) { 10 }
-  let(:other_modulus) { 9 }
-  let(:group) { test_class.for(modulus: modulus) }
-  let(:other_group) { test_class.for(modulus: other_modulus) }
-
-  def random
-    Random.rand(-10**3..10**3)
-  end
-
-  describe "#modulus" do
-    context "when modulus is less than 2" do
-      let(:modulus) { Random.rand(-5..1) }
-      it { expect { group }.to raise_exception ArgumentError }
-    end
-
-    it "has its own modulus" do
-      expect(group.modulus).to eq modulus
-      expect(other_group.modulus).to eq other_modulus
-    end
-  end
-end
-
 describe Group::ModularAdditiveGroup do
   let(:modulus) { Random.rand(2..99) }
   let(:group) { described_class.for(modulus: modulus) }
@@ -37,14 +8,27 @@ describe Group::ModularAdditiveGroup do
     Random.rand(-10**3..10**3)
   end
 
+  describe "#modulus" do
+    subject { group.modulus }
+
+    context "if modulus is 2 or greater" do
+      it { is_expected.to eq modulus }
+    end
+
+    context "if modulus is 1 or less" do
+      let(:modulus) { Random.rand(-5..1) }
+      it { expect { group }.to raise_exception ArgumentError }
+    end
+  end
+
   describe "#identity" do
     subject { group.identity.value }
     it { is_expected.to eq 0 }
   end
 
-  describe "#cast" do
+  describe "#elem" do
     let(:value) { random }
-    subject { group.cast(value).value }
+    subject { group.elem(value).value }
     it { is_expected.to eq value % modulus }
   end
 
@@ -60,7 +44,7 @@ describe Group::ModularAdditiveGroup do
   describe "#op" do
     let(:values) { 6.times.map { random } }
     subject { group.op *values }
-    it { is_expected.to eq group.cast(values.sum) }
+    it { is_expected.to eq group.elem(values.sum) }
   end
 
   describe "#exp" do
@@ -68,7 +52,7 @@ describe Group::ModularAdditiveGroup do
 
     it "is the same as multiplication" do
       [0, 1, -1, random.abs, -random.abs].each do |exponent|
-        expect(group.exp value, exponent).to eq group.cast(value * exponent % modulus)
+        expect(group.exp value, exponent).to eq group.elem(value * exponent % modulus)
       end
     end
   end
@@ -85,13 +69,26 @@ describe Group::ModularMultiplicativeGroup do
     Random.rand(0..30) * modulus + good_remainders.sample
   end
 
+  describe "#modulus" do
+    subject { group.modulus }
+
+    context "if modulus is 2 or greater" do
+      it { is_expected.to eq modulus }
+    end
+
+    context "if modulus is 1 or less" do
+      let(:modulus) { Random.rand(-5..1) }
+      it { expect { group }.to raise_exception ArgumentError }
+    end
+  end
+
   describe "#identity" do
     subject { group.identity.value }
     it { is_expected.to eq 1 }
   end
 
-  describe "#cast" do
-    subject { group.cast(value).value }
+  describe "#elem" do
+    subject { group.elem(value) }
 
     context "when value is 0" do
       let(:value) { 0 }
@@ -100,7 +97,7 @@ describe Group::ModularMultiplicativeGroup do
 
     context "when the value is invertible" do
       let(:value) { random_invertible }
-      it { is_expected.to eq value % modulus }
+      it { is_expected.to eq group.elem(value % modulus) }
     end
 
     context "when the value is not invertible" do
@@ -121,18 +118,17 @@ describe Group::ModularMultiplicativeGroup do
   describe "#op" do
     let(:values) { 6.times.map { random_invertible } }
     subject { group.op *values }
-    it { is_expected.to eq group.cast(values.reduce(1) { |acc, val| acc * val }) }
+    it { is_expected.to eq group.elem(values.reduce(1) { |acc, val| acc * val }) }
   end
 
   describe "#exp" do
     let(:value) { random_invertible }
 
     it "is the same as exponentiation" do
-      puts "value: #{value}"
       [0, 1, *(2..15).to_a.sample(3)].each do |exponent|
         expected = value**exponent % modulus
-        expect(group.exp value, exponent).to eq group.cast(expected)
-        expect(group.exp value, -exponent).to eq group.cast(expected).inverse
+        expect(group.exp value, exponent).to eq group.elem(expected)
+        expect(group.exp value, -exponent).to eq group.elem(expected).inverse
       end
     end
   end

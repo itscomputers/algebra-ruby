@@ -1,27 +1,39 @@
 module Group
   class Base
-    def self.define_attribute(key, value, **options)
-      i_var = "@#{key}"
-      instance_variable_set i_var, value
+    def self.define_attribute(key, value)
+      instance_variable_set "@#{key}", value
       define_method(key) do
-        result = self.class.instance_variable_get i_var
-        options[:should_cast] ? cast(result) : result
+        self.class.instance_variable_get "@#{key}"
       end
     end
 
-    def self.element_class(value)
-      define_attribute :element_class, value
+    def self.element_class(klass)
+      define_attribute :element_class, klass
     end
 
-    def self.identity(value)
-      instance_variable_set :@identity, value
+    def self.value_type(klass)
+      define_attribute :value_type, klass
+    end
+
+    def self.identity_value(value)
+      define_attribute :identity_value, value
+    end
+
+    def self.value_operation(&block)
+      define_method(:value_operation) do |value, other|
+        block.call value, other
+      end
+    end
+
+    def self.value_inverse(&block)
+      define_method(:value_inverse) do |value|
+        block.call value
+      end
     end
 
     def self.init_args(**args)
       define_attribute :init_args, args
     end
-
-    attr_reader :identity
 
     def initialize
       if respond_to? :init_args
@@ -32,19 +44,35 @@ module Group
           end
         end
       end
-      @identity = cast self.class.instance_variable_get(:@identity)
     end
 
-    def cast(thing)
-      element_class.from thing, self
+    def elem(thing)
+      return thing if thing.class == element_class
+
+      raise ArgumentError, "unsupported value type" if thing.class != value_type
+      raise ArgumentError, "unsupported value" unless can_cast? thing
+
+      element_class.new cast(thing), self
+    end
+
+    def cast(value)
+      value
+    end
+
+    def can_cast?(value)
+      true
+    end
+
+    def identity
+      @identity ||= elem identity_value
     end
 
     def binary_operation(thing, other)
-      cast(thing) * cast(other)
+      elem(thing) * elem(other)
     end
 
     def inverse(thing)
-      cast(thing).inverse
+      elem(thing).inverse
     end
 
     def op(*things)
@@ -52,7 +80,7 @@ module Group
     end
 
     def exp(thing, exponent)
-      cast(thing).exp exponent
+      elem(thing).exp exponent
     end
   end
 end

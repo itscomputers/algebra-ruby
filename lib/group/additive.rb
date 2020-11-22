@@ -2,16 +2,14 @@ require 'group/base'
 require 'group/element'
 
 module Group
-  class AdditiveElement < Group::Element
-    def self.inverse(value, _group)
-      -value
-    end
-    alias_method :operate_by, :operate_by_addition
-  end
-
   class Additive < Group::Base
+    AdditiveElement = Class.new(Group::Element)
+
     element_class AdditiveElement
-    identity 0
+    value_type Integer
+    identity_value 0
+    value_operation { |a, b| a + b }
+    value_inverse { |x| -x }
   end
 end
 
