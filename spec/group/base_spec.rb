@@ -1,6 +1,6 @@
 require "group/base"
 require "group/element"
-require "group/additive"
+require "group/integer"
 
 describe Group::Base do
   let(:klass) { Class.new(described_class) }
@@ -71,7 +71,7 @@ describe Group::Base do
   end
 
   describe "initialize" do
-    let(:klass) { Group::Additive }
+    let(:klass) { Group::Integer::Additive }
 
     describe "#identity" do
       subject { group.identity.value }

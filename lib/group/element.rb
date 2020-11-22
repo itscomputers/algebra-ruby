@@ -20,8 +20,6 @@ module Group
     end
 
     def exp(exponent)
-      raise ArgumentError unless exponent.is_a? Integer
-
       return exp(-exponent).inverse if exponent < 0
       return @group.identity if exponent == 0
       return self if exponent == 1

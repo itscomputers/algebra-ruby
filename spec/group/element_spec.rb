@@ -1,11 +1,11 @@
 require "group/base"
 require "group/element"
-require "group/additive"
+require "group/integer"
 
 describe Group::Element do
   let(:value) { 15 }
   let(:element) { group.elem value }
-  let(:group) { Group::Additive.new }
+  let(:group) { Group::Integer::Additive.new }
 
   describe "comparison" do
     context "when class is the same" do
