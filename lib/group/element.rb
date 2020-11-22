@@ -3,12 +3,8 @@ module Group
     attr_reader :value, :group
 
     def initialize(value, group)
-      @group = group
-      set_value(value)
-    end
-
-    def set_value(value)
       @value = value
+      @group = group
     end
 
     def inverse
