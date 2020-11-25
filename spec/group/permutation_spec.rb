@@ -86,33 +86,42 @@ describe Group::Permutation do
     end
   end
 
-  describe "#from_cyclic" do
-    subject { group.from_cycles cycles }
+  describe "#from_cyclic_form" do
+    subject { group.elem_from_cyclic_form cycles }
 
     context "when cyclic form is (1 2 5)(3 4)" do
-      let(:cycles) { "(1 2 5)(3 4)" }
+      let(:cycles) { "(1 2 5) (3 4)" }
       it { is_expected.to eq group.elem([2, 5, 4, 3, 1]) }
-      it { is_expected.to eq group.cf("(3 4)(1 2 5)") }
+      it { is_expected.to eq group.cf("(3 4) (1 2 5)") }
     end
 
     context "when cyclic form is (1 5)(2 4)" do
-      let(:cycles) { "(1 5)(2 4)" }
+      let(:cycles) { "(1 5) (2 4)" }
       it { is_expected.to eq group.elem([5, 4, 3, 2, 1]) }
-      it { is_expected.to eq group.cf("(2 4)(1 5)") }
-      it { is_expected.to eq group.cf("(1 5)(2 4)(3)") }
-      it { is_expected.to eq group.cf("(1 5)(3)(2 4)") }
-      it { is_expected.to eq group.cf("(3)(1 5)(2 4)") }
+      it { is_expected.to eq group.cf("(2 4) (1 5)") }
+      it { is_expected.to eq group.cf("(1 5) (2 4) (3)") }
+      it { is_expected.to eq group.cf("(1 5) (3) (2 4)") }
+      it { is_expected.to eq group.cf("(3) (1 5) (2 4)") }
     end
 
     context "when cyclic form is (1 4 3 5)" do
       let(:cycles) { "(1 4 3 5)" }
       it { is_expected.to eq group.elem([4, 2, 5, 3, 1]) }
-      it { is_expected.to eq group.cf("(2)(1 4 3 5)") }
+      it { is_expected.to eq group.cf("(2) (1 4 3 5)") }
     end
 
     context "when cyclic form has spaces" do
       let(:cycles) { "( 1 2 ) ( 3 5 )" }
-      it { is_expected.to eq group.cf("(1 2)(3 5)") }
+      it { is_expected.to eq group.cf("(1 2) (3 5)") }
+    end
+  end
+
+  describe "PermutationElement#to_cyclic_form" do
+    it "can be reversed by calling group.from_cyclic_form" do
+      group.identity_value.permutation.each do |value|
+        element = group.elem value
+        expect(group.elem_from_cyclic_form element.to_cyclic_form).to eq element
+      end
     end
   end
 end
