@@ -7,6 +7,10 @@ module Group
       @group = group
     end
 
+    def inspect
+      [group.identity_value, @value].map(&:inspect).join("\n")
+    end
+
     def inverse
       @group.elem @group.value_inverse(@value)
     end
@@ -22,6 +26,10 @@ module Group
       return self * self if exponent == 2
       return exp(exponent / 2).exp(2) if exponent % 2 == 0
       self * exp(exponent - 1)
+    end
+
+    def **(exponent)
+      exp exponent
     end
 
     def eql?(other)

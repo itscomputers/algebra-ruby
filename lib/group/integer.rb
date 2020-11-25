@@ -72,7 +72,6 @@ module Group::Integer
 
     def self.for(modulus:)
       raise ArgumentError if modulus < 2
-
       init_args :modulus => modulus
       new
     end
