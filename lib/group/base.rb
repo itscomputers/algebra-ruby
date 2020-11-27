@@ -15,6 +15,12 @@ module Group
       define_attribute :value_type, klass
     end
 
+    def self.value_condition(&block)
+      define_method(:can_cast?) do |value|
+        block.call value
+      end
+    end
+
     def self.identity_value(value)
       define_attribute :identity_value, value
     end
@@ -53,7 +59,7 @@ module Group
     def elem(thing)
       return thing if thing.class == element_class
 
-      raise ArgumentError, "unsupported value type" if thing.class != value_type
+      raise ArgumentError, "got #{thing.class}, expected #{value_type}" if thing.class != value_type
       raise ArgumentError, "unsupported value" unless can_cast? thing
 
       element_class.new cast(thing), self

@@ -1,5 +1,7 @@
 require 'group/integer'
 require 'group/permutation'
+require 'group/klein'
+require 'group/dihedral'
 
 module Group
   def self.integer(operation, modulo: nil)
@@ -18,6 +20,14 @@ module Group
 
   def self.permutation(letters:)
     Group::Permutation.for(letters: letters)
+  end
+
+  def self.klein
+    Group::Klein.new
+  end
+
+  def self.dihedral(sides:)
+    Group::Dihedral.for(sides: sides)
   end
 end
 
