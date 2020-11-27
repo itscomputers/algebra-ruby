@@ -46,6 +46,10 @@ module Group
       end
     end
 
+    def inspect
+      "<#{element_class.inspect} @identity=#{identity.inspect}>"
+    end
+
     def elem(thing)
       return thing if thing.class == element_class
 

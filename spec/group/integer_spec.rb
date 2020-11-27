@@ -41,7 +41,7 @@ describe Group::Integer::Multiplicative do
   let(:group) { described_class.new }
 
   def random
-    Random.rand(1..10**3)
+    1 - 2 * Random.rand(0..1)
   end
 
   describe "#identity" do
@@ -49,36 +49,23 @@ describe Group::Integer::Multiplicative do
   end
 
   describe "#elem" do
-    subject { group.elem(value) }
-
-    context "when value is positive" do
-      let(:value) { random }
-      it { is_expected.to eq group.elem(1) }
-    end
-
-    context "when value is negative" do
-      let(:value) { -random }
-      it { is_expected.to eq group.elem(-1) }
-    end
+    subject { group.elem 0 }
 
     context "when value is 0" do
-      let(:value) { 0 }
-      it { expect { subject }.to raise_exception ArgumentError }
+      it { expect { group.elem 0 }.to raise_exception ArgumentError }
     end
   end
 
   describe "#inverse" do
-    let(:value) { random }
-    let(:element) { group.elem value }
-    let(:inverse) { element.inverse }
-
     it "satisfies the inverse relation" do
-      expect(group.op element, inverse).to eq group.identity
+      group.elements.each do |element|
+        expect(element * element.inverse).to eq group.identity
+      end
     end
   end
 
   describe "#op" do
-    let(:values) { 6.times.map { Random.rand(0..1) == 0 ? random : -random } }
+    let(:values) { 6.times.map { random } }
     subject { group.op *values }
 
     it { is_expected.to eq group.elem(values.count { |val| val < 0 } % 2 == 0 ? 1 : -1) }
@@ -88,28 +75,28 @@ describe Group::Integer::Multiplicative do
     subject { group.exp value, exponent }
 
     context "when value is positive" do
-      let(:value) { random }
-      let(:exponent) { random }
+      let(:value) { 1 }
+      let(:exponent) { Random.rand(-10..10) }
       it { is_expected.to eq group.elem(1) }
     end
 
     context "when value is negative" do
-      let(:value) { -random }
+      let(:value) { -1 }
 
       context "when exponent is even" do
-        let(:exponent) { 2 * random }
+        let(:exponent) { 2 * Random.rand(-10..10) }
         it { is_expected.to eq group.elem(1) }
       end
 
       context "when exponent is odd" do
-        let(:exponent) { 2 * random + 1 }
+        let(:exponent) { 2 * Random.rand(-10..10) + 1 }
         it { is_expected.to eq group.elem(-1) }
       end
     end
   end
 end
 
-describe Group::Integer::ModularAdditiveGroup do
+describe Group::Integer::Modular::Additive do
   let(:modulus) { Random.rand(2..99) }
   let(:group) { described_class.for(modulus: modulus) }
 
@@ -167,7 +154,7 @@ describe Group::Integer::ModularAdditiveGroup do
   end
 end
 
-describe Group::Integer::ModularMultiplicativeGroup do
+describe Group::Integer::Modular::Multiplicative do
   let(:modulus) { 20 }
   let(:group) { described_class.for(modulus: modulus) }
   let(:good_remainders) { (0...modulus).select { |val| modulus.gcd(val) == 1 } }

@@ -8,7 +8,7 @@ module Group
     end
 
     def inspect
-      [group.identity_value, @value].map(&:inspect).join("\n")
+      @value.inspect
     end
 
     def inverse

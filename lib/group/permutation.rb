@@ -46,7 +46,7 @@ module Group
 
     class PermutationElement
       def to_s
-        to_cycles
+        to_cyclic_form
       end
 
       def to_cyclic_form
