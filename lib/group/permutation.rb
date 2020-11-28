@@ -49,11 +49,11 @@ module Group
         until left.empty?
           if letter
             left.delete letter
-            @cyclic_form.last << letter
           else
             letter = left.shift
-            @cyclic_form << [letter]
+            @cyclic_form << []
           end
+          @cyclic_form.last << letter
           next_letter = @value[letter - 1]
           letter = left.include?(next_letter) && next_letter
         end
