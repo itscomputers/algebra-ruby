@@ -6,6 +6,13 @@ module Group
       end
     end
 
+    def self.identity_value(value)
+      instance_variable_set :@identity_value, value
+      define_method(:identity_value) do
+        self.class.instance_variable_get :@identity_value
+      end
+    end
+
     def initialize(**metadata)
       @metadata = metadata
       if self.respond_to? :init_args
@@ -19,17 +26,13 @@ module Group
       end
     end
 
+    def metadata
+      { **@metadata, :identity_value => identity_value }
+    end
+
     def elem(thing)
       return thing if thing.class == element_class
-
-      unless thing.class == value_type
-        raise ArgumentError, "got #{thing.class}, expected #{value_type}"
-      end
-      unless valid_value? thing
-        raise ArgumentError, "invalid value #{thing}"
-      end
-
-      element_class.new(thing, **@metadata)
+      element_class.new(thing, **metadata)
     end
 
     def identity
@@ -75,16 +78,8 @@ module Group
       self.class::Element
     end
 
-    def value_type
-      dummy_element.value_type
-    end
-
     def identity_value
-      dummy_element.identity_value
-    end
-
-    def dummy_element
-      element_class.new(nil, **@metadata)
+      @identity_value ||= self.class.identity_value(**@metadata)
     end
   end
 end

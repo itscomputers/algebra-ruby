@@ -16,14 +16,13 @@ module Group::Modular
     DESC
 
     init_args :modulus
+    identity_value 0
 
     def values
       (0...@modulus)
     end
 
     class Element < Group::Element
-      value_type { Integer }
-      identity_value { 0 }
       value_operation { |a, b, **metadata| (a + b) % metadata[:modulus] }
       value_inverse { |a, **metadata| (-a) % metadata[:modulus] }
     end
@@ -45,6 +44,7 @@ module Group::Modular
     DESC
 
     init_args :modulus
+    identity_value 1
 
     def valid_value?(value)
       value.gcd(@modulus) == 1
@@ -55,8 +55,6 @@ module Group::Modular
     end
 
     class Element < Group::Element
-      value_type { Integer }
-      identity_value { 1 }
       value_operation { |a, b, **metadata| (a * b) % metadata[:modulus] }
       value_inverse { |a, **metadata| Util.bezout(a, metadata[:modulus]).first % metadata[:modulus] }
     end

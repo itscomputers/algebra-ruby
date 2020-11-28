@@ -3,6 +3,7 @@ require 'group/permutation'
 module Group
   class Dihedral < Group::Base
     init_args :sides
+    identity_value [:rot, 0]
 
     def valid_value?(value)
       [:rot, :ref].include?(value.first) && value.last.is_a?(Integer)
@@ -22,9 +23,6 @@ module Group
     end
 
     class Element < Group::Element
-      value_type { Array }
-      identity_value { [:rot, 0] }
-
       def value_operation(a, b)
         result = case [a, b].map(&:first)
         when [:rot, :rot] then [:rot, a.last + b.last]

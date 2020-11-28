@@ -4,8 +4,6 @@ require "group/element"
 describe Group::Element do
   let(:test_class) do
     Class.new(described_class) do
-      value_type { Array }
-      identity_value { [1, 0] }
       value_operation { |a, b|
         [
           a.first * b.first + 2 * a.last * b.last,
@@ -19,13 +17,14 @@ describe Group::Element do
     end
   end
 
-  let(:element) { test_class.new([3, 2]) }
-  let(:identity) { test_class.new([1, 0]) }
+  let(:metadata) { { :identity_value => [1, 0] } }
+  let(:element) { test_class.new([3, 2], **metadata) }
+  let(:identity) { element.build element.identity_value }
 
   describe "comparison" do
     context "when class is the same" do
       context "when values are the same" do
-        let(:other) { test_class.new(element.value) }
+        let(:other) { element.build element.value }
 
         it "considers them equal" do
           expect(element).to eq other
@@ -36,7 +35,7 @@ describe Group::Element do
       end
 
       context "when values are different" do
-        let(:other) { test_class.new(element.value.map { |x| x + 1 }) }
+        let(:other) { element.build element.value.map { |x| x + 1 } }
 
         it "considers them unequal" do
           expect(element).to_not eq other
@@ -48,7 +47,7 @@ describe Group::Element do
     end
 
     context "when class is different" do
-      let(:other) { Group::Element.new(element.value) }
+      let(:other) { Group::Element.new(element.value, **metadata) }
 
       it "considers them unequal" do
         expect(element).to_not eq other

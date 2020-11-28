@@ -8,6 +8,10 @@ describe Group::Base do
     Class.new(described_class) do
       Element ||= Class.new Group::Element
 
+      def self.identity_value
+        ""
+      end
+
       def valid_value?(value)
         value != "invalid"
       end
@@ -22,7 +26,6 @@ describe Group::Base do
     group.element_class.define_method(:value_type) { String }
     group.element_class.define_method(:value_operation) { |a, b| "#{b}#{a}" }
     group.element_class.define_method(:value_inverse) { |a| "#{a.upcase}" }
-    group.element_class.define_method(:identity_value) { "" }
   end
 
   describe "#initialize" do
@@ -60,27 +63,18 @@ describe Group::Base do
   describe "#elem" do
     subject { group.elem thing }
 
-    context "when already an element" do
-      let(:thing) { group.element_class.new(value) }
-      it { is_expected.to eq thing }
-    end
-
     context "when just a value" do
       let(:thing) { value }
 
-      context "when it is the right class" do
-        it { is_expected.to eq group.element_class.new(value) }
+      it "builds an element with that value" do
+        expect(subject).to be_a Group::Element
+        expect(subject.value).to eq value
       end
+    end
 
-      context "when it is the wrong class" do
-        let(:value) { 666 }
-        it { expect { subject }.to raise_exception ArgumentError }
-      end
-
-      context "when it is invalid" do
-        before { allow(group).to receive(:valid_value?) { value }.and_return false }
-        it { expect { subject }.to raise_exception ArgumentError }
-      end
+    context "when already an element" do
+      let(:thing) { group.elem value }
+      it { is_expected.to eq thing }
     end
   end
 

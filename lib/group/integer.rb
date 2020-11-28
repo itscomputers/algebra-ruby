@@ -17,9 +17,9 @@ module Group::Integer
           (group exponentiation in additive groups is just multiplication)
     DESC
 
+    identity_value 0
+
     class Element < Group::Element
-      value_type { Integer }
-      identity_value { 0 }
       value_operation { |a, b| a + b }
       value_inverse { |a| -a }
     end
@@ -38,6 +38,8 @@ module Group::Integer
         group.exp(-1, 3) ~> -1 * -1 * -1 ~> -1
     DESC
 
+    identity_value 1
+
     def valid_value?(value)
       value.abs == 1
     end
@@ -47,8 +49,6 @@ module Group::Integer
     end
 
     class Element < Group::Element
-      value_type { Integer }
-      identity_value { 1 }
       value_operation { |a, b| a * b }
       value_inverse { |a| a }
     end

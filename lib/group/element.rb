@@ -56,12 +56,8 @@ module Group
       @value.hash
     end
 
-    def value_type
-      _value_type
-    end
-
     def identity_value
-      _identity_value(**@metadata)
+      @metadata[:identity_value]
     end
 
     def value_operation(a, b)
@@ -73,14 +69,6 @@ module Group
     end
 
     private
-
-    def _value_type
-      self.class.value_type
-    end
-
-    def _identity_value(**metadata)
-      self.class.identity_value(**metadata)
-    end
 
     def _value_operation(a, b, **metadata)
       self.class.value_operation(a, b, **metadata)

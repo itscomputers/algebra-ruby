@@ -5,6 +5,10 @@ module Group
   class Permutation < Group::Base
     init_args :letters
 
+    def identity_value
+      (1...@letters).to_a
+    end
+
     def letter_set
       @value_set ||= identity_value.to_set
     end
@@ -35,8 +39,6 @@ module Group
     end
 
     class Element < Group::Element
-      value_type { Array }
-      identity_value { |**metadata| (1..metadata[:letters]).to_a }
       value_operation { |a, b| b.map { |val| a[val-1] } }
       value_inverse { |a| a.size.times.map { |idx| a.index(idx+1) + 1 } }
 
@@ -44,7 +46,7 @@ module Group
         return @cyclic_form if @cyclic_form
 
         @cyclic_form = []
-        left = identity_value
+        left = (1...@metadata[:letters]).to_a
         letter = nil
         until left.empty?
           if letter
