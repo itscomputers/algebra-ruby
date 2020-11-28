@@ -3,69 +3,64 @@ require 'group/element'
 
 module Group
   class Permutation < Group::Base
-    PermutationElement = Class.new(Group::Element)
-    element_class PermutationElement
-    value_type Array
-    value_operation { |a, b| b.map { |val| a[val-1] } }
-    value_inverse { |a| a.size.times.map { |idx| a.index(idx + 1) + 1 } }
-
-    def self.for(letters:)
-      raise ArgumentError if letters < 1
-      init_args :letters => letters
-      new
-    end
-
-    def identity_value
-      (1..@letters).to_a
-    end
+    init_args :letters
 
     def letter_set
-      @letter_set ||= (1..@letters).to_set
+      @value_set ||= identity_value.to_set
     end
 
-    def can_cast?(value)
+    def valid_value?(value)
       value.to_set == letter_set
     end
 
-    def elem_from_cyclic_form(cyclic_form_string)
-      cycles = cyclic_form_string.gsub(/ +/, " ").split(/\) *\(/).map do |string|
+    def values
+      identity_value.permutation
+    end
+
+    def elem_from_cycles(string_of_cycles)
+      cycles = string_of_cycles.gsub(/ +/, " ").split(/\) *\(/).map do |string|
         string.gsub(/[\(\)]/, "").split(" ").map(&:to_i)
       end
-      op *cycles.map(&method(:from_cycle))
+      op *cycles.map(&method(:elem_from_cycle_array))
     end
-    alias_method :cf, :elem_from_cyclic_form
+    alias_method :cf, :elem_from_cycles
 
     private
 
-    def from_cycle(cycle)
-      raise ArgumentError unless cycle.to_set.subset? letter_set
+    def elem_from_cycle_array(cycle_array)
+      raise ArgumentError unless cycle_array.to_set.subset? letter_set
       result = identity_value
-      [*cycle, cycle.first].each_cons(2) { |a, b| result[a - 1] = b }
+      [*cycle_array, cycle_array.first].each_cons(2) { |a, b| result[a - 1] = b }
       elem result
     end
 
-    class PermutationElement
-      def to_s
-        to_cyclic_form
-      end
+    class Element < Group::Element
+      value_type { Array }
+      identity_value { |**metadata| (1..metadata[:letters]).to_a }
+      value_operation { |a, b| b.map { |val| a[val-1] } }
+      value_inverse { |a| a.size.times.map { |idx| a.index(idx+1) + 1 } }
 
-      def to_cyclic_form
-        return @to_cycles if @to_cycles
-        @to_cycles = []
-        left = @group.identity_value
+      def cyclic_form
+        return @cyclic_form if @cyclic_form
+
+        @cyclic_form = []
+        left = identity_value
         letter = nil
         until left.empty?
           if letter
             left.delete letter
-            @to_cycles.last << letter
+            @cyclic_form.last << letter
           else
             letter = left.shift
-            @to_cycles << [letter]
+            @cyclic_form << [letter]
           end
           next_letter = @value[letter - 1]
           letter = left.include?(next_letter) && next_letter
         end
-        @to_cycles.reject { |cycle| cycle.size < 2 }.map { |cycle| "(#{cycle.join(" ")})" }.join(" ")
+
+        @cyclic_form
+          .reject { |cycle| cycle.size < 2 }
+          .map { |cycle| "(#{cycle.join(" ")})" }.join(" ")
       end
     end
   end

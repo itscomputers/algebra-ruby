@@ -1,96 +1,90 @@
 module Group
   class Base
-    def self.define_attribute(key, value)
-      instance_variable_set "@#{key}", value
-      define_method(key) do
-        self.class.instance_variable_get "@#{key}"
+    def self.init_args(*args)
+      define_method(:init_args) do
+        args
       end
     end
 
-    def self.element_class(klass)
-      define_attribute :element_class, klass
-    end
-
-    def self.value_type(klass)
-      define_attribute :value_type, klass
-    end
-
-    def self.value_condition(&block)
-      define_method(:can_cast?) do |value|
-        block.call value
-      end
-    end
-
-    def self.identity_value(value)
-      define_attribute :identity_value, value
-    end
-
-    def self.value_operation(&block)
-      define_method(:value_operation) do |value, other|
-        block.call value, other
-      end
-    end
-
-    def self.value_inverse(&block)
-      define_method(:value_inverse) do |value|
-        block.call value
-      end
-    end
-
-    def self.init_args(**args)
-      define_attribute :init_args, args
-    end
-
-    def initialize
-      if respond_to? :init_args
-        init_args.each do |key, value|
-          instance_variable_set "@#{key}", value
-          self.class.define_method(key) do
-            instance_variable_get "@#{key}"
+    def initialize(**metadata)
+      @metadata = metadata
+      if self.respond_to? :init_args
+        init_args.each do |arg|
+          if metadata.key? arg
+            instance_variable_set "@#{arg}", metadata[arg]
+          else
+            raise ArgumentError, "requires named parameter #{arg} to initialize"
           end
         end
       end
     end
 
-    def inspect
-      "<#{element_class.inspect} @identity=#{identity.inspect}>"
-    end
-
     def elem(thing)
       return thing if thing.class == element_class
 
-      raise ArgumentError, "got #{thing.class}, expected #{value_type}" if thing.class != value_type
-      raise ArgumentError, "unsupported value" unless can_cast? thing
+      unless thing.class == value_type
+        raise ArgumentError, "got #{thing.class}, expected #{value_type}"
+      end
+      unless valid_value? thing
+        raise ArgumentError, "invalid value #{thing}"
+      end
 
-      element_class.new cast(thing), self
-    end
-
-    def cast(value)
-      value
-    end
-
-    def can_cast?(value)
-      true
+      element_class.new(thing, **@metadata)
     end
 
     def identity
       @identity ||= elem identity_value
     end
 
-    def binary_operation(thing, other)
-      elem(thing) * elem(other)
-    end
-
     def inverse(thing)
       elem(thing).inverse
     end
+    alias_method :inv, :inverse
 
     def op(*things)
       things.reduce(identity) { |acc, thing| binary_operation acc, thing }
     end
 
     def exp(thing, exponent)
-      elem(thing).exp exponent
+      elem(thing)**exponent
+    end
+
+    def valid_value?(value)
+      true
+    end
+
+    def value_superset
+      nil
+    end
+
+    def values
+      value_superset&.select(&method(:valid_value?))
+    end
+
+    def elements
+      @elements ||= values&.map(&method(:elem))
+    end
+
+    private
+
+    def binary_operation(thing, other)
+      elem(thing) * elem(other)
+    end
+
+    def element_class
+      self.class::Element
+    end
+
+    def value_type
+      dummy_element.value_type
+    end
+
+    def identity_value
+      dummy_element.identity_value
+    end
+
+    def dummy_element
+      element_class.new(nil, **@metadata)
     end
   end
 end

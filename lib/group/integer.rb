@@ -12,17 +12,17 @@ module Group::Integer
       Example
         group = Additive.new
         group.op(17, 8, -9) ~> 17 + 8 + -9 == 16
-        group.inverse(8) ~> -8
+        group.inverse(8) ~> -8 since 8 + -8 == 0
         group.exp(17, 3) ~> 17 + 17 + 17 == 51
           (group exponentiation in additive groups is just multiplication)
     DESC
 
-    AdditiveElement = Class.new(Group::Element)
-    element_class AdditiveElement
-    value_type Integer
-    identity_value 0
-    value_operation { |a, b| a + b }
-    value_inverse { |x| -x }
+    class Element < Group::Element
+      value_type { Integer }
+      identity_value { 0 }
+      value_operation { |a, b| a + b }
+      value_inverse { |a| -a }
+    end
   end
 
   class Multiplicative < Group::Base
@@ -38,89 +38,19 @@ module Group::Integer
         group.exp(-1, 3) ~> -1 * -1 * -1 ~> -1
     DESC
 
-    MultiplicativeElement = Class.new(Group::Element)
-    element_class MultiplicativeElement
-    value_type Integer
-    identity_value 1
-    value_operation { |a, b| a * b }
-    value_inverse { |x| x }
-
-    def can_cast?(value)
+    def valid_value?(value)
       value.abs == 1
     end
 
     def elements
       [1, -1].map(&method(:elem))
     end
-  end
 
-  #---------------------------
-
-  class Modular < Group::Base
-    <<~DESC
-      Abstract class representing integers modulo a given modulus
-      Elements have values that are remainders { 0, 1, 2, ..., modulus - 1 }
-    DESC
-
-    def self.for(modulus:)
-      raise ArgumentError if modulus < 2
-      init_args :modulus => modulus
-      new
-    end
-
-    def cast(value)
-      value % modulus
-    end
-
-    class Additive < Modular
-      <<~DESC
-        Group of integers modulo a given modulus under modular addition
-        - identity is 0
-        - inverse is negation which is equivalent to subtraction from modulus
-
-        Example:
-          group = ModularAdditiveGroup.for(modulus: 10)
-          group.op(7, 8, 9) ~> (7 + 8 + 9) % 10 == 4
-          group.inverse(8) ~> (-8) % 10 == 2
-          group.exp(8, 3) ~> 8 + 8 + 8 == 4
-      DESC
-
-      ModularAdditiveElement = Class.new(Group::Element)
-      element_class ModularAdditiveElement
-      value_type Integer
-      identity_value 0
-      value_operation { |a, b| a + b }
-      value_inverse { |x| -x }
-    end
-
-    class Multiplicative < Modular
-      <<~DESC
-        Group of invertible integers modulo a given modulus under modular multiplication
-        - identity is 1
-        - an integer is invertible if and only if it is relatively prime to the modulus
-        - inverse is computed using the extended Euclidean algorithm, see Bezout's lemma
-
-        Example:
-          group = ModularMultiplicativeGroup.for(modulus: 10)
-          four possible element values: { 1, 3, 7, 9 }
-          group.op(3, 7, 9) ~> (3 * 7 * 9) % 10 == 9
-          group.inverse(7) ~> 3 since group.op(3, 7) == 1
-          group.exp(7, 3) ~> 7 * 7 * 7 == 3
-      DESC
-
-      ModularMultiplicativeElement = Class.new(Group::Element)
-      element_class ModularMultiplicativeElement
-      value_type Integer
-      identity_value 1
+    class Element < Group::Element
+      value_type { Integer }
+      identity_value { 1 }
       value_operation { |a, b| a * b }
-
-      def value_inverse(value)
-        Util.bezout(value, modulus).first
-      end
-
-      def can_cast?(value)
-        modulus.gcd(value) == 1
-      end
+      value_inverse { |a| a }
     end
   end
 end
