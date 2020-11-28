@@ -1,40 +1,16 @@
 require 'group/permutation'
 
-class Symbol
-  def dihedral_type
-    to_s[0..2].to_sym
-  end
-
-  def dihedral_index
-    to_s[4..].to_i
-  end
-
-  def dihedral?
-    [:rot, :ref].include?(dihedral_type) && dihedral_index.is_a?(Integer)
-  end
-end
-
 module Group
   class Dihedral < Group::Base
-    Element = Class.new(Group::Element)
-    element_class Element
-    value_type Symbol
-    identity_value :rot_0
+    init_args :sides
 
-    def self.for(sides:)
-      raise ArgumentError unless sides > 2
-      init_args :sides => sides
-      new
+    def valid_value?(value)
+      [:rot, :ref].include?(value.first) && value.last.is_a?(Integer)
+      true
     end
 
-    def can_cast?(value)
-      value.dihedral?
-    end
-
-    def elements
-      @elements ||= (0...sides).flat_map do |index|
-        [:rot, :ref].map { |type| elem_from type, index }
-      end
+    def values
+      @values = [:rot, :ref].product((0...@sides).to_a)
     end
 
     def rotations
@@ -42,37 +18,38 @@ module Group
     end
 
     def reflections
-      @reflections ||= elements.select { |element| element.type == :ref }
+      @reflection ||= elements.select { |element| element.type == :ref }
     end
 
-    def elem_from(type, index)
-      elem "#{type}_#{index % sides}".to_sym
-    end
+    class Element < Group::Element
+      value_type { Array }
+      identity_value { [:rot, 0] }
 
-    def value_inverse(a)
-      case a.dihedral_type
-      when :rot then elem_from :rot, -a.dihedral_index
-      when :ref then a
+      def value_operation(a, b)
+        result = case [a, b].map(&:first)
+        when [:rot, :rot] then [:rot, a.last + b.last]
+        when [:rot, :ref] then [:ref, a.last + b.last]
+        when [:ref, :rot] then [:ref, a.last - b.last]
+        when [:ref, :ref] then [:rot, a.last - b.last]
+        end
+        [result.first, result.last % @metadata[:sides]]
       end
-    end
 
-    def value_operation(a, b)
-      case [a, b].map(&:dihedral_type)
-      when [:rot, :rot] then elem_from :rot, a.dihedral_index + b.dihedral_index
-      when [:ref, :ref] then elem_from :rot, a.dihedral_index - b.dihedral_index
-      when [:rot, :ref] then elem_from :ref, a.dihedral_index + b.dihedral_index
-      when [:ref, :rot] then elem_from :ref, a.dihedral_index - b.dihedral_index
+      def value_inverse(a)
+        case a.first
+        when :rot then [:rot, -a.last % @metadata[:sides]]
+        when :ref then a
+        end
       end
-    end
 
-    class Element
       def type
-        @value.dihedral_type
+        value.first
       end
 
       def index
-        @value.dihedral_index
+        value.last
       end
     end
   end
 end
+

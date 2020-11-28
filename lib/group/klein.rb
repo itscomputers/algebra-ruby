@@ -3,16 +3,19 @@ require 'group/element'
 
 module Group
   class Klein < Group::Base
-    Element = Class.new(Group::Element)
-    element_class Element
-    value_type ::Integer
-    value_condition { |a| 0 <= a && a < 4 }
-    identity_value 0
-    value_operation { |a, b| a ^ b }
-    value_inverse { |a| a }
+    def valid_value?(value)
+      values.include? value
+    end
 
-    def elements
-      [0, 1, 2, 3].map(&method(:elem))
+    def values
+      @values ||= ["0", "1", "10", "11"]
+    end
+
+    class Element < Group::Element
+      value_type { String }
+      identity_value { '0' }
+      value_operation { |a, b| (a.to_i(2) ^ b.to_i(2)).to_s(2) }
+      value_inverse { |a| a }
     end
   end
 end

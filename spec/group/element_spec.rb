@@ -1,16 +1,31 @@
 require "group/base"
 require "group/element"
-require "group/integer"
 
 describe Group::Element do
-  let(:value) { 15 }
-  let(:element) { group.elem value }
-  let(:group) { Group::Integer::Additive.new }
+  let(:test_class) do
+    Class.new(described_class) do
+      value_type { Array }
+      identity_value { [1, 0] }
+      value_operation { |a, b|
+        [
+          a.first * b.first + 2 * a.last * b.last,
+          a.first * b.last + a.last * b.first,
+        ]
+      }
+      value_inverse { |a|
+        norm = a.first**2 - 2*a.last**2
+        [a.first / norm, -a.last / norm]
+      }
+    end
+  end
+
+  let(:element) { test_class.new([3, 2]) }
+  let(:identity) { test_class.new([1, 0]) }
 
   describe "comparison" do
     context "when class is the same" do
       context "when values are the same" do
-        let(:other) { group.elem value }
+        let(:other) { test_class.new(element.value) }
 
         it "considers them equal" do
           expect(element).to eq other
@@ -21,7 +36,7 @@ describe Group::Element do
       end
 
       context "when values are different" do
-        let(:other) { group.elem(value + 1) }
+        let(:other) { test_class.new(element.value.map { |x| x + 1 }) }
 
         it "considers them unequal" do
           expect(element).to_not eq other
@@ -33,7 +48,7 @@ describe Group::Element do
     end
 
     context "when class is different" do
-      let(:other) { Group::Element.new(value, group) }
+      let(:other) { Group::Element.new(element.value) }
 
       it "considers them unequal" do
         expect(element).to_not eq other
@@ -44,51 +59,33 @@ describe Group::Element do
     end
   end
 
-  describe "#*" do
-    let(:value) { 15 }
-    let(:other_value) { 16 }
-    let(:other_element) { group.elem other_value }
-    subject { element * other_element }
-
-    it { is_expected.to eq group.elem(value + other_value) }
+  it "satisfies identity relation" do
+    expect(element * identity).to eq element
+    expect(identity * element).to eq element
   end
 
-  describe "#inverse" do
-    let(:value) { 15 }
-    let(:inverse) { element.inverse }
-
-    it "satisifies the inverse relationship" do
-      expect(element * inverse).to eq group.identity
-    end
-
-    it "has the inverse of the inverse as itself" do
-      expect(inverse.inverse).to eq element
-    end
-
-    it "has the inverse of the identity as itself" do
-      expect(group.identity.inverse).to eq group.identity
-    end
+  it "satisfies inverse relation" do
+    expect(element * element.inverse).to eq identity
+    expect(element.inverse * element).to eq identity
   end
 
   describe "#exp" do
-    let(:value) { 5 }
-
     context "when exponent is non-negative" do
-      (0..20).each do |exponent|
+      (0..10).each do |exponent|
         context "when exponent is #{exponent}" do
           it "is the same as performing the operation #{exponent} times" do
-            expect(element.exp(exponent))
-              .to eq exponent.times.reduce(group.identity) { |acc, _val| acc * element }
+            expect(element**exponent)
+              .to eq exponent.times.reduce(identity) { |acc, _val| acc * element }
           end
         end
       end
     end
 
     context "when exponent is negative" do
-      (0..20).each do |exponent|
+      (0..10).each do |exponent|
         context "when exponent is #{-exponent}" do
           it "is the same as taking the positive exponent of the inverse" do
-            expect(element.exp(-exponent)).to eq element.inverse.exp(exponent)
+            expect(element**(-exponent)).to eq element.inverse**exponent
           end
         end
       end
